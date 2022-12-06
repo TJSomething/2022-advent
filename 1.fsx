@@ -36,7 +36,7 @@ let day1b() =
         |> Seq.sum
         |> printfn "Top 3: %d"
 
-printfn """Pick part "a" or "b": """
+printf """Pick part "a" or "b": """
 let response = Console.ReadLine()
 
 if response = "a" then
