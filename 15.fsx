@@ -120,12 +120,31 @@ let day15b () =
                 for i = 0 to candidateCount - 1 do
                     let candidate = candidates[i]
                     let currentDist = candidateDist[i]
-                    let nextX = (fst candidate) + (rnd.Next(-3, 3))
-                    let nextY = (snd candidate) + (rnd.Next(-3, 3))
+                    let x = fst candidate
+                    let y = snd candidate
+                    // Approximately implement Newton's method
+                    let leftDist = beaconDist (x - 1, y) map
+                    let rightDist = beaconDist (x + 1, y) map
+                    let topDist = beaconDist (x, y - 1) map
+                    let bottomDist = beaconDist (x, y + 1) map
+                    let xSlope = (rightDist - leftDist) / 2
+                    let ySlope = (bottomDist - topDist) / 2
+                    // This isn't exactly right (that's the Euclidean
+                    // distance), but since it's going to be used to divide the
+                    // jump, it will prevent overshoot, since the Manhattan
+                    // distance is always greater than or equal to the
+                    // Euclidean distance. Also, max to prevent division by
+                    // zero
+                    let slopeMag = max ((abs xSlope) + (abs ySlope)) 1
+                    let nextX = x + (rnd.Next(-3, 3)) - xSlope * currentDist / slopeMag
+                    let nextY = y + (rnd.Next(-3, 3)) - ySlope * currentDist / slopeMag
                     let nextCandidate = (nextX, nextY)
                     let nextDist = beaconDist nextCandidate map
 
-                    if nextDist > 0 then
+                    let isInBounds =
+                        not (nextX < 0 || 4_000_000 < nextX || nextY < 0 || 4_000_000 < nextY)
+
+                    if nextDist > 0 && isInBounds then
                         yield nextCandidate
 
                     if nextDist > currentDist then
@@ -136,13 +155,7 @@ let day15b () =
                         lastImproved[i] <- lastImproved[i] + 1
 
                     // If it falls off the map or it's been too long since improvement, restart
-                    if
-                        nextX < 0
-                        || 4_000_000 < nextX
-                        || nextY < 0
-                        || 4_000_000 < nextY
-                        || lastImproved[i] > 100
-                    then
+                    if (not isInBounds) || lastImproved[i] > 100 then
                         candidates[i] <- (rnd.Next(0, 4_000_000), rnd.Next(0, 4_000_000))
                         candidateDist[i] <- beaconDist candidates[i] map
         }
